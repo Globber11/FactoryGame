@@ -27,7 +27,7 @@ namespace Factory.Core
         public byte Item;      // 0 = пусто
         public byte Powered;   // у Module и Extractor: 1 = питание есть (выставляет EnergyNetwork перед тактом)
         public int Timer;      // Source/Extractor: таймер; Module: указатель очереди по входам; Stabilizer: режим (StabilizerMode)
-        public int Link;       // Module: id вложенного слоя; Stabilizer: какой вид выдать следующим в режиме "оба"
+        public int Link;       // Module: id вложенного слоя; Stabilizer: какой вид выдать следующим в режиме "оба"; Belt/Input: предметы (BeltSlot)
     }
 
     // Предметы. Все ресурсы игры называются эссенциями
@@ -69,6 +69,32 @@ namespace Factory.Core
                 case Both: return "обе (по очереди)";
                 default: return "?";
             }
+        }
+    }
+
+    // Лента хранит до четырёх предметов в клетке: места 0 (сзади, у входа) .. 3 (спереди, у выхода).
+    // Каждое место это байт в Cell.Link (0 = пусто). Так плотность в 4 раза выше, чем у одного предмета на клетку.
+    public static class BeltSlot
+    {
+        public const int Count = 4;
+
+        public static byte Get(int packed, int slot)
+        {
+            return (byte)((packed >> (slot * 8)) & 0xFF);
+        }
+
+        public static int Set(int packed, int slot, byte item)
+        {
+            int shift = slot * 8;
+            return (packed & ~(0xFF << shift)) | (item << shift);
+        }
+
+        public static int CountItems(int packed)
+        {
+            int n = 0;
+            for (int s = 0; s < Count; s++)
+                if (Get(packed, s) != 0) n++;
+            return n;
         }
     }
 
